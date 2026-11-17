@@ -1,0 +1,206 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-body: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Industrial Integrity palette */
+    --color-surface: #f9f9ff;
+    --color-surface-dim: #cfdaf2;
+    --color-surface-bright: #f9f9ff;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f0f3ff;
+    --color-surface-container: #e7eeff;
+    --color-surface-container-high: #dee8ff;
+    --color-surface-container-highest: #d8e3fb;
+    /* Deep Slate — reserved for text/max-contrast, per the brand style guide */
+    --color-on-surface: #1e293b;
+    --color-on-surface-variant: #44474e;
+    --color-inverse-surface: #263143;
+    --color-inverse-on-surface: #ecf1ff;
+    --color-outline: #74777f;
+    --color-outline-variant: #c4c6cf;
+    --color-surface-tint: #495f84;
+
+    /* Navy Blue — headers, navigation, structure */
+    --color-primary: #001b3d;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #001b3d;
+    --color-on-primary-container: #ffffff;
+    --color-inverse-primary: #b1c7f2;
+
+    /* Industrial Gold — CTAs, highlights, critical status */
+    --color-secondary: #fbae17;
+    --color-on-secondary: #001b3d;
+    --color-secondary-container: #fbae17;
+    --color-on-secondary-container: #001b3d;
+
+    /* Steel Grey — borders, subtle backgrounds, secondary containers */
+    --color-tertiary: #e2e8f0;
+    --color-on-tertiary: #44474e;
+    --color-tertiary-container: #e2e8f0;
+    --color-on-tertiary-container: #44474e;
+
+    --color-error: #ba1a1a;
+    --color-on-error: #ffffff;
+    --color-error-container: #ffdad6;
+    --color-on-error-container: #93000a;
+
+    --color-primary-fixed: #d6e3ff;
+    --color-primary-fixed-dim: #b1c7f2;
+    --color-on-primary-fixed: #001b3d;
+    --color-on-primary-fixed-variant: #31476b;
+
+    --color-secondary-fixed: #ffddb0;
+    --color-secondary-fixed-dim: #ffba45;
+    --color-on-secondary-fixed: #281800;
+    --color-on-secondary-fixed-variant: #614000;
+
+    --color-tertiary-fixed: #dde3eb;
+    --color-tertiary-fixed-dim: #c1c7cf;
+    --color-on-tertiary-fixed: #161c22;
+    --color-on-tertiary-fixed-variant: #41474e;
+
+    --color-background: #f9f9ff;
+    --color-on-background: #1e293b;
+    --color-surface-variant: #d8e3fb;
+
+    /* shadcn/ui bridge — same source tokens as above, single light theme */
+    --color-foreground: #1e293b;
+    --color-card: #ffffff;
+    --color-card-foreground: #1e293b;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #1e293b;
+    --color-primary-foreground: #ffffff;
+    --color-secondary-foreground: #ffffff;
+    --color-muted: #f0f3ff;
+    --color-muted-foreground: #44474e;
+    --color-accent: #dee8ff;
+    --color-accent-foreground: #1e293b;
+    --color-destructive: #ba1a1a;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #c4c6cf;
+    --color-input: #c4c6cf;
+    --color-ring: #001b3d;
+
+    /* Shape — Industrial Integrity is "soft but disciplined" */
+    --radius-sm: 0.125rem;
+    --radius: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+
+    /* Spacing (prefixed "sp-" so xs/sm/md/lg/xl don't collide with Tailwind's
+       reserved sizing scale, e.g. max-w-sm/max-w-xl) */
+    --spacing-sp-xs: 8px;
+    --spacing-sp-sm: 16px;
+    --spacing-sp-md: 24px;
+    --spacing-sp-lg: 32px;
+    --spacing-sp-xl: 80px;
+    --spacing-gutter: 24px;
+    --spacing-margin-mobile: 16px;
+    --spacing-margin-desktop: 64px;
+
+    --container-app: 1280px;
+}
+
+/*
+ * Typography scale — declared as @utility rather than @theme text-* tokens
+ * because Tailwind v4's text-size theme namespace only pairs line-height /
+ * font-weight / letter-spacing, not font-family. Each style below carries
+ * its own font so headline/body/label classes stay correct regardless of
+ * the ancestor font-sans fallback on <body>.
+ */
+@utility text-headline-xl {
+    font-family: var(--font-sans);
+    font-size: 48px;
+    line-height: 56px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+@utility text-headline-lg {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+@utility text-headline-lg-mobile {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 700;
+}
+
+@utility text-headline-md {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+}
+
+@utility text-body-lg {
+    font-family: var(--font-body);
+    font-size: 18px;
+    line-height: 28px;
+    font-weight: 400;
+}
+
+@utility text-body-md {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+}
+
+/* Not in the source design tokens, kept for existing field-label/meta-text
+   usage across the app — sits between body-md and label-sm, Work Sans. */
+@utility text-label-md {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+@utility text-label-sm {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+@utility text-button {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 700;
+}
+
+/* Form field labels — Work Sans, normal case, per the Quotation App reference
+   mockup (not monospace: mono is reserved for eyebrows/tabular/technical data). */
+@utility text-field-label {
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+}
+
+/* Section eyebrow — small uppercase mono label with a leading gold tick,
+   repeated above every major heading in the reference design. */
+@utility text-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}

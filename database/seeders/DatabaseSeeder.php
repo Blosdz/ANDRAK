@@ -1,0 +1,26 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Usuario;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        Usuario::factory()->create([
+            'nombre' => 'Andrea',
+            'mail' => 'andrea@gmail.com',
+            'password' => 'toxic1234',
+        ]);
+
+        $this->call(SunatCatalogSeeder::class);
+    }
+}
