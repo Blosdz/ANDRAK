@@ -62,6 +62,7 @@ onMounted(fetchCotizacion);
             <div>
                 <h1 class="text-headline-lg-mobile text-on-surface lg:text-headline-lg">{{ cotizacion.numero }}</h1>
                 <p class="text-body-md text-on-surface-variant">{{ cotizacion.cliente?.nombre }}</p>
+                <p class="text-body-md text-on-surface-variant">Emisor: {{ cotizacion.empresa?.nombre_comercial }} (RUC {{ cotizacion.empresa?.ruc }})</p>
             </div>
             <Badge :value="cotizacion.estado" />
         </div>

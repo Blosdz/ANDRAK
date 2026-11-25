@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import http from '../http';
 import Tabs from '../components/Tabs.vue';
 import Button from '../components/ui/button/Button.vue';
@@ -23,6 +23,16 @@ const tabs = [
 ];
 
 const loading = ref(true);
+const empresas = ref([]);
+const empresaId = ref(null);
+const nuevoEmisor = reactive({ nombre_comercial: '', razon_social: '', ruc: '10730862453' });
+const nuevoEmisorError = ref('');
+const creandoEmisor = ref(false);
+const faltaSegundoEmisor = computed(() => !empresas.value.some((item) => item.ruc === '10730862453'));
+const opcionesEmisor = computed(() => empresas.value.map((item) => ({
+    value: item.id,
+    label: `${item.nombre_comercial} — ${item.ruc}`,
+})));
 const savingGeneral = ref(false);
 const savingSunat = ref(false);
 const uploadingCertificado = ref(false);
@@ -69,14 +79,22 @@ const certificadoArchivo = ref(null);
 const certificadoPassword = ref('');
 
 const series = ref([]);
+const nuevaSerie = reactive({ tipo_comprobante_id: '01', serie: '', correlativo: 0 });
 
 const modoSunatOptions = [
     { value: 'beta', label: 'Beta (pruebas / homologacion)' },
     { value: 'produccion', label: 'Produccion' },
 ];
 
+async function fetchEmpresas() {
+    const { data } = await http.get('/empresas');
+    empresas.value = data;
+    empresaId.value = empresaId.value || data[0]?.id || null;
+}
+
 async function fetchEmpresa() {
-    const { data } = await http.get('/empresa');
+    if (!empresaId.value) return;
+    const { data } = await http.get(`/empresas/${empresaId.value}`);
     Object.assign(empresa, data);
     empresa.sunat_clave_sol = '';
     cuentas.value = (data.cuentas_bancarias || []).map((c) => ({
@@ -88,13 +106,42 @@ async function fetchEmpresa() {
 }
 
 async function fetchCertificado() {
-    const { data } = await http.get('/certificado');
+    if (!empresaId.value) return;
+    const { data } = await http.get('/certificado', { params: { empresa_id: empresaId.value } });
     Object.assign(certificado, data);
 }
 
 async function fetchSeries() {
-    const { data } = await http.get('/series');
+    if (!empresaId.value) return;
+    const { data } = await http.get('/series', { params: { empresa_id: empresaId.value } });
     series.value = data;
+}
+
+async function seleccionarEmisor(id) {
+    empresaId.value = Number(id);
+    await Promise.all([fetchEmpresa(), fetchCertificado(), fetchSeries()]);
+    certificadoArchivo.value = null;
+    certificadoPassword.value = '';
+    generalMessage.value = '';
+    documentosMessage.value = '';
+    sunatMessage.value = '';
+    certificadoMessage.value = '';
+    seriesMessage.value = '';
+}
+
+async function crearEmisor() {
+    creandoEmisor.value = true;
+    nuevoEmisorError.value = '';
+    try {
+        const { data } = await http.post('/empresas', nuevoEmisor);
+        await fetchEmpresas();
+        await seleccionarEmisor(data.id);
+    } catch (error) {
+        nuevoEmisorError.value = error.response?.data?.errors?.nombre_comercial?.[0]
+            || error.response?.data?.message || 'No se pudo crear el emisor.';
+    } finally {
+        creandoEmisor.value = false;
+    }
 }
 
 function onLogoPick(event) {
@@ -123,7 +170,7 @@ async function guardarGeneral() {
     savingGeneral.value = true;
     generalMessage.value = '';
     try {
-        const { data } = await http.put('/empresa', {
+        const { data } = await http.put(`/empresas/${empresaId.value}`, {
             nombre_comercial: empresa.nombre_comercial,
             razon_social: empresa.razon_social,
             ruc: empresa.ruc,
@@ -135,6 +182,7 @@ async function guardarGeneral() {
             marca_agua: empresa.marca_agua || null,
         });
         Object.assign(empresa, data);
+        await fetchEmpresas();
         generalMessage.value = 'Datos guardados.';
     } finally {
         savingGeneral.value = false;
@@ -145,7 +193,7 @@ async function guardarDocumentos() {
     savingDocumentos.value = true;
     documentosMessage.value = '';
     try {
-        const { data } = await http.put('/empresa', {
+        const { data } = await http.put(`/empresas/${empresaId.value}`, {
             nombre_comercial: empresa.nombre_comercial,
             ruc: empresa.ruc,
             eslogan: empresa.eslogan,
@@ -173,7 +221,7 @@ async function guardarSunat() {
     savingSunat.value = true;
     sunatMessage.value = '';
     try {
-        const { data } = await http.put('/empresa', {
+        const { data } = await http.put(`/empresas/${empresaId.value}`, {
             nombre_comercial: empresa.nombre_comercial,
             ruc: empresa.ruc,
             modo_sunat: empresa.modo_sunat,
@@ -204,6 +252,7 @@ async function subirCertificado() {
         const formData = new FormData();
         formData.append('file', certificadoArchivo.value);
         formData.append('password', certificadoPassword.value);
+        formData.append('empresa_id', empresaId.value);
 
         const { data } = await http.post('/certificado', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -226,7 +275,7 @@ async function subirCertificado() {
 }
 
 async function eliminarCertificado() {
-    await http.delete('/certificado');
+    await http.delete('/certificado', { params: { empresa_id: empresaId.value } });
     certificado.certificado = null;
     certificado.vencimiento = null;
     certificadoMessage.value = 'Certificado eliminado.';
@@ -242,9 +291,23 @@ async function guardarSerie(serie) {
     seriesMessage.value = 'Series actualizadas.';
 }
 
+async function agregarSerie() {
+    seriesMessage.value = '';
+    try {
+        await http.post('/series', { ...nuevaSerie, empresa_id: empresaId.value });
+        await fetchSeries();
+        nuevaSerie.serie = '';
+        nuevaSerie.correlativo = 0;
+        seriesMessage.value = 'Serie agregada.';
+    } catch (error) {
+        seriesMessage.value = error.response?.data?.message || 'No se pudo agregar la serie.';
+    }
+}
+
 onMounted(async () => {
     loading.value = true;
     try {
+        await fetchEmpresas();
         await Promise.all([fetchEmpresa(), fetchCertificado(), fetchSeries()]);
     } finally {
         loading.value = false;
@@ -259,6 +322,17 @@ onMounted(async () => {
         <div v-if="loading" class="text-on-surface-variant">Cargando...</div>
 
         <div v-else class="border border-outline-variant bg-surface-container-lowest p-sp-md">
+            <div class="mb-sp-md flex flex-col gap-sp-sm border-b border-outline-variant pb-sp-md">
+                <FormSelect v-if="empresas.length" :model-value="empresaId" label="Emisor que deseas configurar"
+                    :options="opcionesEmisor" @update:model-value="seleccionarEmisor" />
+                <form v-if="faltaSegundoEmisor" class="grid grid-cols-1 items-end gap-sp-sm sm:grid-cols-4" @submit.prevent="crearEmisor">
+                    <FormInput v-model="nuevoEmisor.ruc" label="Segundo RUC" required maxlength="11" readonly />
+                    <FormInput v-model="nuevoEmisor.nombre_comercial" label="Nombre del segundo emisor" required />
+                    <FormInput v-model="nuevoEmisor.razon_social" label="Razón social del titular del RUC" required />
+                    <Button type="submit" :disabled="creandoEmisor">{{ creandoEmisor ? 'Agregando...' : 'Agregar emisor' }}</Button>
+                    <p v-if="nuevoEmisorError" class="text-body-md text-error sm:col-span-4">{{ nuevoEmisorError }}</p>
+                </form>
+            </div>
             <Tabs :tabs="tabs">
                 <template #general>
                     <form class="flex flex-col gap-sp-md" @submit.prevent="guardarGeneral">
@@ -350,9 +424,7 @@ onMounted(async () => {
                 <template #sunat>
                     <form class="flex flex-col gap-sp-md" @submit.prevent="guardarSunat">
                         <p class="text-body-md text-on-surface-variant">
-                            En modo <strong>beta</strong> puedes usar las credenciales publicas de homologacion de SUNAT:
-                            RUC <code>20000000001</code>, usuario SOL <code>MODDATOS</code>, clave <code>moddatos</code>.
-                            El usuario que se envia a SUNAT es el RUC seguido del usuario SOL (ej. <code>20000000001MODDATOS</code>).
+                            Configura las credenciales SUNAT del emisor seleccionado. Cada RUC requiere sus propias credenciales.
                         </p>
                         <div class="grid grid-cols-1 gap-sp-md sm:grid-cols-2">
                             <FormSelect v-model="empresa.modo_sunat" label="Modo" :options="modoSunatOptions" />
@@ -396,6 +468,14 @@ onMounted(async () => {
 
                 <template #series>
                     <div class="flex flex-col gap-sp-md">
+                        <form class="grid grid-cols-1 items-end gap-sp-sm sm:grid-cols-4" @submit.prevent="agregarSerie">
+                            <FormSelect v-model="nuevaSerie.tipo_comprobante_id" label="Tipo" :options="[
+                                { value: '01', label: 'Factura' }, { value: '03', label: 'Boleta' }
+                            ]" />
+                            <FormInput v-model="nuevaSerie.serie" label="Nueva serie" required maxlength="4" />
+                            <FormInput v-model="nuevaSerie.correlativo" label="Correlativo inicial" type="number" min="0" required />
+                            <Button type="submit">Agregar serie</Button>
+                        </form>
                         <div class="hidden overflow-hidden border border-outline-variant md:block">
                             <Table>
                                 <TableHeader>

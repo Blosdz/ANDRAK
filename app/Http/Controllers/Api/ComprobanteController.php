@@ -24,7 +24,7 @@ class ComprobanteController extends Controller
         ]);
 
         $venta->load(['cliente', 'cotizacion.lineas']);
-        $empresa = Empresa::actual();
+        $empresa = $venta->cotizacion?->empresa ?? Empresa::actual();
 
         if (! $empresa->tieneSunatConfigurado()) {
             return response()->json([
@@ -46,8 +46,12 @@ class ComprobanteController extends Controller
             return response()->json(['message' => 'La venta no tiene lineas para facturar.'], 422);
         }
 
-        $comprobante = DB::transaction(function () use ($tipoComprobanteId, $venta, $cliente, $lineas) {
-            [$serie, $numero] = Serie::siguienteNumero($tipoComprobanteId);
+        if (! Serie::where('empresa_id', $empresa->id)->where('tipo_comprobante_id', $tipoComprobanteId)->exists()) {
+            return response()->json(['message' => 'Configure una serie para este tipo de comprobante y emisor.'], 422);
+        }
+
+        $comprobante = DB::transaction(function () use ($tipoComprobanteId, $venta, $cliente, $lineas, $empresa) {
+            [$serie, $numero] = Serie::siguienteNumero($tipoComprobanteId, $empresa->id);
 
             $items = $lineas->map(function ($linea) {
                 $subtotal = round((float) $linea->cantidad * (float) $linea->precio_unitario, 2);
@@ -74,6 +78,7 @@ class ComprobanteController extends Controller
             $totalPen = $tipoCambio ? round($total * (float) $tipoCambio, 2) : null;
 
             $comprobante = Comprobante::create([
+                'empresa_id' => $empresa->id,
                 'venta_id' => $venta->id,
                 'cliente_id' => $cliente->id,
                 'tipo_comprobante_id' => $tipoComprobanteId,
@@ -128,7 +133,7 @@ class ComprobanteController extends Controller
     public function pdf(Comprobante $comprobante)
     {
         $comprobante->load(['items', 'cliente', 'tipoComprobante']);
-        $empresa = Empresa::actual();
+        $empresa = $comprobante->empresa ?? Empresa::actual();
 
         return Pdf::loadView('pdf.comprobante', ['comprobante' => $comprobante, 'empresa' => $empresa])
             ->setPaper('a4')

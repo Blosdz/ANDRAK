@@ -416,6 +416,8 @@ onMounted(fetchVenta);
 
         <Dialog :open="dialogOpen" title="Emitir comprobante" @close="dialogOpen = false">
             <div class="flex flex-col gap-sp-md">
+                <p class="text-body-md text-on-surface">Emisor: {{ venta.cotizacion?.empresa?.nombre_comercial }}
+                    (RUC {{ venta.cotizacion?.empresa?.ruc }})</p>
                 <FormSelect v-model="tipoComprobante" label="Tipo de comprobante" :options="tipoComprobanteOptions" />
                 <p v-if="emitirError" class="text-body-md text-error">{{ emitirError }}</p>
                 <div class="flex justify-end gap-sp-sm">

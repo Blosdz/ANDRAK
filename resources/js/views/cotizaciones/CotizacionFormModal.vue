@@ -10,6 +10,7 @@ import ProductoPicker from '../../components/cotizaciones/ProductoPicker.vue';
 import Button from '../../components/ui/button/Button.vue';
 import Alert from '../../components/ui/alert/Alert.vue';
 import AlertDescription from '../../components/ui/alert/AlertDescription.vue';
+import ClienteFormModal from '../clientes/ClienteFormModal.vue';
 
 const props = defineProps({
     open: { type: Boolean, required: true },
@@ -21,12 +22,18 @@ const TASA_IMPUESTO = 0.18;
 
 const saving = ref(false);
 const errors = ref({});
+const empresas = ref([]);
+const opcionesEmisor = computed(() => empresas.value.map((item) => ({
+    value: item.id, label: `${item.nombre_comercial} — ${item.ruc}`,
+})));
 
 const clienteQuery = ref('');
 const clienteResultados = ref([]);
 const clienteSeleccionado = ref(null);
+const showClienteModal = ref(false);
 
 const form = reactive({
+    empresa_id: null,
     moneda: 'PEN',
     horas_entrega: '',
     detalles: '',
@@ -84,18 +91,29 @@ function seleccionarCliente(cliente) {
     clienteResultados.value = [];
 }
 
+function clienteCreado(cliente) {
+    seleccionarCliente(cliente);
+    showClienteModal.value = false;
+}
+
 function resetForm() {
     clienteQuery.value = '';
     clienteResultados.value = [];
     clienteSeleccionado.value = null;
     Object.assign(form, {
-        moneda: 'PEN', horas_entrega: '', detalles: '', referencia: '', validez_dias: 5, garantia: '', aplicarImpuesto: false, lineas: [],
+        empresa_id: empresas.value[0]?.id || null, moneda: 'PEN', horas_entrega: '', detalles: '', referencia: '', validez_dias: 5, garantia: '', aplicarImpuesto: false, lineas: [],
     });
     errors.value = {};
 }
 
-watch(() => props.open, (isOpen) => {
-    if (isOpen) resetForm();
+watch(() => props.open, async (isOpen) => {
+    if (isOpen) {
+        const { data } = await http.get('/empresas');
+        empresas.value = data;
+        resetForm();
+    } else {
+        showClienteModal.value = false;
+    }
 });
 
 async function guardar() {
@@ -103,6 +121,7 @@ async function guardar() {
     errors.value = {};
 
     const payload = {
+        empresa_id: form.empresa_id,
         cliente_id: clienteSeleccionado.value?.id,
         moneda: form.moneda,
         horas_entrega: form.horas_entrega || null,
@@ -132,12 +151,17 @@ async function guardar() {
 <template>
     <Modal :open="open" title="Nueva cotizacion" max-width="max-w-3xl" @close="$emit('close')">
         <div class="flex flex-col gap-sp-md">
+            <FormSelect v-model="form.empresa_id" label="Emisor (RUC)" required :options="opcionesEmisor"
+                :error="errors.empresa_id?.[0]" />
             <Alert v-if="errors.general" variant="destructive">
                 <AlertDescription>{{ errors.general[0] }}</AlertDescription>
             </Alert>
 
             <div>
-                <span class="text-field-label text-on-surface-variant">Cliente <span class="text-error">*</span></span>
+                <div class="flex items-center justify-between gap-sp-sm">
+                    <span class="text-field-label text-on-surface-variant">Cliente <span class="text-error">*</span></span>
+                    <Button type="button" variant="outline" size="sm" @click="showClienteModal = true">Nuevo cliente</Button>
+                </div>
                 <div v-if="clienteSeleccionado" class="mt-1 flex items-center justify-between rounded-sm border border-outline-variant px-sp-sm py-2">
                     <span class="text-body-md text-on-surface">{{ clienteSeleccionado.nombre }} <span class="text-on-surface-variant">({{ clienteSeleccionado.empresa || 'sin empresa' }})</span></span>
                     <Button variant="link" @click="clienteSeleccionado = null">Cambiar</Button>
@@ -221,4 +245,5 @@ async function guardar() {
             </div>
         </div>
     </Modal>
+    <ClienteFormModal :open="showClienteModal" @close="showClienteModal = false" @saved="clienteCreado" />
 </template>

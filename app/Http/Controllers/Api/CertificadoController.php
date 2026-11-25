@@ -14,7 +14,7 @@ class CertificadoController extends Controller
 {
     public function show()
     {
-        $empresa = Empresa::actual();
+        $empresa = Empresa::findOrFail(request()->integer('empresa_id', 1));
 
         return response()->json([
             'certificado' => $empresa->certificado,
@@ -29,7 +29,7 @@ class CertificadoController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $empresa = Empresa::actual();
+        $empresa = Empresa::findOrFail($request->integer('empresa_id', 1));
 
         try {
             $pfx = file_get_contents($request->file('file')->getRealPath());
@@ -65,7 +65,7 @@ class CertificadoController extends Controller
 
     public function destroy()
     {
-        $empresa = Empresa::actual();
+        $empresa = Empresa::findOrFail(request()->integer('empresa_id', 1));
 
         if ($empresa->certificado) {
             $ruta = storage_path('app/certificates/'.$empresa->certificado);

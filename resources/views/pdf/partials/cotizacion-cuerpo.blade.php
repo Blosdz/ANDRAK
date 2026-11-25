@@ -41,7 +41,17 @@
     $notasAdicionales = $cotizacion->detalles
         ? array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $cotizacion->detalles))))
         : [];
+    $cuentaPago = $empresa->cuentasBancarias->firstWhere('moneda', 'PEN');
 @endphp
+<table class="datos-table mt-16">
+    <tr>
+        <td width="50%"><strong>RAZÓN SOCIAL:</strong> {{ $empresa->razon_social }}</td>
+        <td width="50%"><strong>RUC:</strong> {{ $empresa->ruc }}</td>
+    </tr>
+    <tr>
+        <td colspan="2"><strong>UBICACIÓN:</strong> {{ $empresa->direccion }}</td>
+    </tr>
+</table>
 <div class="mt-20 section-title">DATOS DE LA COTIZACION</div>
 <table class="datos-table mt-16">
     <tr>
@@ -167,3 +177,41 @@
         <li>{{ $nota }}</li>
     @endforeach
 </ul>
+
+@if ($cuentaPago)
+    <div class="mt-20 section-title">DATOS BANCARIOS Y FORMAS DE PAGO</div>
+    <table class="datos-table mt-16">
+        <tr>
+            <td width="50%"><strong>BANCO:</strong> {{ $cuentaPago->banco }}</td>
+            <td width="50%"><strong>CUENTA EN SOLES:</strong> {{ $cuentaPago->numero_cuenta }}</td>
+        </tr>
+        <tr>
+            <td><strong>CCI:</strong> {{ $cuentaPago->cci }}</td>
+            <td><strong>TITULAR:</strong> {{ $empresa->titular_cuenta }}</td>
+        </tr>
+    </table>
+    @if ($empresa->titular_cuenta)
+        <p>Los depósitos o transferencias se realizan a nombre de {{ $empresa->titular_cuenta }}.</p>
+    @endif
+@endif
+
+@if ($empresa->ruc === '20616592395')
+<div class="mt-20 section-title">PERSONAL RESPONSABLE</div>
+<table class="datos-table mt-16">
+    <tr>
+        <td width="50%">
+            <strong>LIC. ANDREA MARIET LIMA ESCOBEDO</strong><br>
+            Gerente General<br>
+            ANDRAK S.A.C.
+        </td>
+        <td width="50%">
+            <strong>LUIS ANTONIO LIMA YUCRA</strong><br>
+            Jefe tecnico de fabricación<br>
+            ANDRAK S.A.C.
+        </td>
+    </tr>
+</table>
+@elseif ($empresa->representante_nombre)
+<div class="mt-20 section-title">PERSONAL RESPONSABLE</div>
+<p>{{ $empresa->representante_nombre }}</p>
+@endif

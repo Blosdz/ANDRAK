@@ -23,6 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/empresa', [EmpresaController::class, 'show']);
     Route::put('/empresa', [EmpresaController::class, 'update']);
+    Route::get('/empresas', [EmpresaController::class, 'index']);
+    Route::post('/empresas', [EmpresaController::class, 'store']);
+    Route::get('/empresas/{empresa}', [EmpresaController::class, 'showEmpresa']);
+    Route::put('/empresas/{empresa}', [EmpresaController::class, 'updateEmpresa']);
 
     Route::get('/certificado', [CertificadoController::class, 'show']);
     Route::post('/certificado', [CertificadoController::class, 'store']);
@@ -51,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/comprobantes/{comprobante}/cdr', [ComprobanteController::class, 'cdr']);
 
     Route::get('/series', [SerieController::class, 'index']);
+    Route::post('/series', [SerieController::class, 'store']);
     Route::put('/series/{serie}', [SerieController::class, 'update']);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);

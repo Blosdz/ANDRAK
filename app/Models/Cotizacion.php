@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['cliente_id', 'tipo_pago_id', 'numero', 'estado', 'moneda', 'subtotal', 'impuestos', 'total', 'horas_entrega', 'detalles', 'referencia', 'validez_dias', 'garantia'])]
+#[Fillable(['empresa_id', 'cliente_id', 'tipo_pago_id', 'numero', 'estado', 'moneda', 'subtotal', 'impuestos', 'total', 'horas_entrega', 'detalles', 'referencia', 'validez_dias', 'garantia'])]
 #[ObservedBy(CotizacionObserver::class)]
 class Cotizacion extends Model
 {
@@ -31,6 +31,11 @@ class Cotizacion extends Model
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
     }
 
     public function tipoPago(): BelongsTo

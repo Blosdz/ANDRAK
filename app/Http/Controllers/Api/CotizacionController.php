@@ -22,7 +22,7 @@ class CotizacionController extends Controller
     public function index(Request $request)
     {
         $cotizaciones = Cotizacion::query()
-            ->with(['cliente', 'lineas'])
+            ->with(['cliente', 'lineas', 'empresa'])
             ->when($request->buscar, fn ($q, $buscar) => $q->where(function ($q) use ($buscar) {
                 $q->where('numero', 'ilike', "%{$buscar}%")
                     ->orWhereHas('cliente', fn ($q) => $q->where('nombre', 'ilike', "%{$buscar}%"));
@@ -37,7 +37,7 @@ class CotizacionController extends Controller
 
     public function show(Cotizacion $cotizacion, TipoCambioService $tipoCambioService)
     {
-        $cotizacion->load(['cliente', 'lineas.producto', 'tipoPago', 'venta']);
+        $cotizacion->load(['cliente', 'lineas.producto', 'tipoPago', 'venta', 'empresa']);
 
         return response()->json([
             ...$cotizacion->toArray(),
@@ -90,6 +90,7 @@ class CotizacionController extends Controller
             $impuestos = $request->input('impuestos');
 
             $cotizacion = Cotizacion::create([
+                'empresa_id' => $request->integer('empresa_id'),
                 'cliente_id' => $request->cliente_id,
                 'tipo_pago_id' => $request->tipo_pago_id,
                 'moneda' => $request->moneda,
@@ -108,7 +109,7 @@ class CotizacionController extends Controller
             return $cotizacion;
         });
 
-        return response()->json($cotizacion->load(['cliente', 'lineas.producto']), 201);
+        return response()->json($cotizacion->load(['cliente', 'lineas.producto', 'empresa']), 201);
     }
 
     public function update(UpdateCotizacionRequest $request, Cotizacion $cotizacion)
@@ -150,7 +151,7 @@ class CotizacionController extends Controller
             $cotizacion->update($data);
         });
 
-        return response()->json($cotizacion->load(['cliente', 'lineas.producto']));
+        return response()->json($cotizacion->load(['cliente', 'lineas.producto', 'empresa']));
     }
 
     public function destroy(Cotizacion $cotizacion)
@@ -180,7 +181,7 @@ class CotizacionController extends Controller
     public function pdf(Cotizacion $cotizacion, TipoCambioService $tipoCambioService)
     {
         $cotizacion->load(['cliente', 'lineas.producto', 'tipoPago']);
-        $empresa = Empresa::actual();
+        $empresa = $cotizacion->empresa ?? Empresa::actual();
         $equivalentePen = $this->equivalentePen($cotizacion, $tipoCambioService);
 
         return Pdf::loadView('pdf.cotizacion', ['cotizacion' => $cotizacion, 'empresa' => $empresa, 'equivalentePen' => $equivalentePen])

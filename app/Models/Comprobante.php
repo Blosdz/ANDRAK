@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'venta_id', 'cliente_id', 'tipo_comprobante_id', 'serie', 'numero', 'moneda_id', 'tipo_cambio',
+    'empresa_id', 'venta_id', 'cliente_id', 'tipo_comprobante_id', 'serie', 'numero', 'moneda_id', 'tipo_cambio',
     'fecha_emision', 'hora_emision', 'subtotal', 'total_igv', 'total', 'total_pen', 'estado',
     'hash', 'qr', 'xml_path', 'cdr_path', 'respuesta_sunat', 'has_cdr',
 ])]
@@ -31,6 +31,11 @@ class Comprobante extends Model
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
     }
 
     public function cliente(): BelongsTo

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption } from '@headlessui/vue';
 import http from '../../http';
@@ -12,6 +12,7 @@ import Button from '../../components/ui/button/Button.vue';
 import Alert from '../../components/ui/alert/Alert.vue';
 import AlertDescription from '../../components/ui/alert/AlertDescription.vue';
 import PageEyebrow from '../../components/PageEyebrow.vue';
+import ClienteFormModal from '../clientes/ClienteFormModal.vue';
 
 const props = defineProps({ id: { type: [String, Number], required: true } });
 const router = useRouter();
@@ -23,13 +24,19 @@ const loading = ref(false);
 const saving = ref(false);
 const converting = ref(false);
 const errors = ref({});
+const empresas = ref([]);
+const opcionesEmisor = computed(() => empresas.value.map((item) => ({
+    value: item.id, label: `${item.nombre_comercial} — ${item.ruc}`,
+})));
 const cotizacionActual = ref(null);
 
 const clienteQuery = ref('');
 const clienteResultados = ref([]);
 const clienteSeleccionado = ref(null);
+const showClienteModal = ref(false);
 
 const form = reactive({
+    empresa_id: null,
     moneda: 'PEN',
     horas_entrega: '',
     detalles: '',
@@ -84,12 +91,18 @@ function seleccionarCliente(cliente) {
     clienteResultados.value = [];
 }
 
+function clienteCreado(cliente) {
+    seleccionarCliente(cliente);
+    showClienteModal.value = false;
+}
+
 async function cargarCotizacion() {
     loading.value = true;
     try {
         const { data } = await http.get(`/cotizaciones/${props.id}`);
         cotizacionActual.value = data;
         clienteSeleccionado.value = data.cliente;
+        form.empresa_id = data.empresa_id;
         form.moneda = data.moneda;
         form.horas_entrega = data.horas_entrega ?? '';
         form.detalles = data.detalles ?? '';
@@ -114,6 +127,7 @@ async function guardar() {
     errors.value = {};
 
     const payload = {
+        empresa_id: form.empresa_id,
         cliente_id: clienteSeleccionado.value?.id,
         moneda: form.moneda,
         horas_entrega: form.horas_entrega || null,
@@ -156,6 +170,10 @@ async function convertirVenta() {
 }
 
 watch(() => props.id, cargarCotizacion, { immediate: true });
+onMounted(async () => {
+    const { data } = await http.get('/empresas');
+    empresas.value = data;
+});
 watch(() => form.moneda, (moneda) => {
     if (moneda === 'USD' && !tipoCambio.value) cargarTipoCambio();
 }, { immediate: true });
@@ -181,7 +199,13 @@ watch(() => form.moneda, (moneda) => {
                 <div class="rounded-lg border border-outline-variant bg-surface-container-lowest p-sp-md lg:p-sp-lg">
                     <div class="mb-sp-sm text-eyebrow text-on-surface-variant">Datos del cliente</div>
 
-                    <span class="text-field-label text-on-surface-variant">Cliente <span class="text-error">*</span></span>
+                    <FormSelect v-model="form.empresa_id" label="Emisor (RUC)" required :options="opcionesEmisor"
+                        :disabled="isConvertida" :error="errors.empresa_id?.[0]" />
+
+                    <div class="flex items-center justify-between gap-sp-sm">
+                        <span class="text-field-label text-on-surface-variant">Cliente <span class="text-error">*</span></span>
+                        <Button v-if="!isConvertida" type="button" variant="outline" size="sm" @click="showClienteModal = true">Nuevo cliente</Button>
+                    </div>
                     <div v-if="clienteSeleccionado" class="mt-1 flex items-center justify-between rounded-sm border border-outline-variant px-sp-sm py-2">
                         <span class="text-body-md text-on-surface">{{ clienteSeleccionado.nombre }} <span class="text-on-surface-variant">({{ clienteSeleccionado.empresa || 'sin empresa' }})</span></span>
                         <Button v-if="!isConvertida" variant="link" @click="clienteSeleccionado = null">Cambiar</Button>
@@ -269,4 +293,5 @@ watch(() => form.moneda, (moneda) => {
             </div>
         </div>
     </div>
+    <ClienteFormModal :open="showClienteModal" @close="showClienteModal = false" @saved="clienteCreado" />
 </template>

@@ -17,7 +17,7 @@ class Facturalo
 {
     public function generarXml(Comprobante $comprobante): string
     {
-        $empresa = Empresa::actual();
+        $empresa = $comprobante->empresa ?? Empresa::actual();
 
         return view('xml.comprobante', [
             'comprobante' => $comprobante->load(['cliente', 'items.tipoAfectacionIgv']),
@@ -25,9 +25,9 @@ class Facturalo
         ])->render();
     }
 
-    public function firmarXml(string $xml): string
+    public function firmarXml(Comprobante $comprobante, string $xml): string
     {
-        $empresa = Empresa::actual();
+        $empresa = $comprobante->empresa ?? Empresa::actual();
 
         if (! $empresa->certificado) {
             throw new Exception('No hay un certificado digital configurado.');
@@ -43,7 +43,7 @@ class Facturalo
 
     public function enviarSunat(Comprobante $comprobante, string $xmlFirmado): BillResult
     {
-        $empresa = Empresa::actual();
+        $empresa = $comprobante->empresa ?? Empresa::actual();
 
         $client = new WsClient();
         $client->setCredentials($empresa->sunat_usuario_sol, $empresa->sunat_clave_sol);
@@ -60,7 +60,7 @@ class Facturalo
 
     public function procesarCdr(Comprobante $comprobante, BillResult $resultado, string $xmlFirmado): void
     {
-        $empresa = Empresa::actual();
+        $empresa = $comprobante->empresa ?? Empresa::actual();
         $carpeta = "comprobantes/{$empresa->ruc}/{$comprobante->tipo_comprobante_id}";
 
         $nombreBase = sprintf('%s-%s', $comprobante->serie, $comprobante->numero);
@@ -122,7 +122,7 @@ class Facturalo
     public function emitir(Comprobante $comprobante): Comprobante
     {
         $xml = $this->generarXml($comprobante);
-        $xmlFirmado = $this->firmarXml($xml);
+        $xmlFirmado = $this->firmarXml($comprobante, $xml);
         $resultado = $this->enviarSunat($comprobante, $xmlFirmado);
         $this->procesarCdr($comprobante, $resultado, $xmlFirmado);
 

@@ -28,7 +28,7 @@ class VentaController extends Controller
     public function show(Venta $venta)
     {
         return response()->json($venta->load([
-            'cliente', 'cotizacion.lineas.producto', 'tipoPago', 'comprobantes.tipoComprobante', 'pagos',
+            'cliente', 'cotizacion.lineas.producto', 'cotizacion.empresa', 'tipoPago', 'comprobantes.tipoComprobante', 'comprobantes.empresa', 'pagos',
         ]));
     }
 
@@ -42,7 +42,7 @@ class VentaController extends Controller
     public function pdf(Request $request, Venta $venta)
     {
         $venta->load(['cliente', 'cotizacion.lineas.producto', 'tipoPago', 'pagos']);
-        $empresa = Empresa::actual()->load('cuentasBancarias');
+        $empresa = ($venta->cotizacion?->empresa ?? Empresa::actual())->load('cuentasBancarias');
 
         // "Parcial" (tipo=recibo): contrato de compra + recibo de pago, sin la
         // seccion de cotizacion. El documento completo incluye las 3 secciones

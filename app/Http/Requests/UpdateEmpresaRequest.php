@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateEmpresaRequest extends FormRequest
 {
@@ -28,7 +29,8 @@ class UpdateEmpresaRequest extends FormRequest
             'nombre_comercial' => ['required', 'string', 'max:255'],
             'eslogan' => ['nullable', 'string', 'max:255'],
             'razon_social' => ['nullable', 'string', 'max:255'],
-            'ruc' => ['required', 'string', 'max:20'],
+            'ruc' => ['required', 'digits:11', Rule::in(['20616592395', '10730862453']),
+                Rule::unique('empresa', 'ruc')->ignore($this->route('empresa')?->id ?? 1)],
             'direccion' => ['nullable', 'string', 'max:255'],
             'ubigeo' => ['nullable', 'string', 'max:6'],
             'establecimiento_codigo' => ['nullable', 'string', 'max:4'],

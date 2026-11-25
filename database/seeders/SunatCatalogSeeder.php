@@ -41,9 +41,17 @@ class SunatCatalogSeeder extends Seeder
             ['id' => 'ZZ', 'descripcion' => 'Servicio'],
         ], ['id'], ['descripcion']);
 
-        DB::table('series')->upsert([
-            ['tipo_comprobante_id' => '03', 'serie' => 'B001', 'correlativo' => 0],
-            ['tipo_comprobante_id' => '01', 'serie' => 'F001', 'correlativo' => 0],
-        ], ['tipo_comprobante_id'], ['serie']);
+        foreach (['03' => 'B001', '01' => 'F001'] as $tipo => $serie) {
+            if (! DB::table('series')->where('empresa_id', 1)->where('tipo_comprobante_id', $tipo)->exists()) {
+                DB::table('series')->insert([
+                    'empresa_id' => 1,
+                    'tipo_comprobante_id' => $tipo,
+                    'serie' => $serie,
+                    'correlativo' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 }

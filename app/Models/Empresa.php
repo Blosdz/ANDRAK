@@ -38,9 +38,15 @@ class Empresa extends Model
         return $this->hasMany(CuentaBancaria::class)->orderBy('orden');
     }
 
+    public function series(): HasMany
+    {
+        return $this->hasMany(Serie::class);
+    }
+
     public function tieneSunatConfigurado(): bool
     {
         return (bool) $this->certificado
+            && (bool) $this->razon_social
             && (bool) $this->sunat_usuario_sol
             && (bool) $this->sunat_clave_sol
             && strlen($this->ruc) === 11;

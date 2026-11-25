@@ -39,13 +39,14 @@ async function guardar() {
     errors.value = {};
 
     try {
+        let data;
         if (props.cliente) {
-            await http.put(`/clientes/${props.cliente.id}`, form);
+            ({ data } = await http.put(`/clientes/${props.cliente.id}`, form));
         } else {
-            await http.post('/clientes', form);
+            ({ data } = await http.post('/clientes', form));
         }
 
-        emit('saved');
+        emit('saved', data);
     } catch (e) {
         errors.value = e.response?.data?.errors || {};
     } finally {

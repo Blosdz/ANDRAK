@@ -24,6 +24,7 @@ class UpdateCotizacionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'empresa_id' => ['sometimes', 'required', 'integer', 'exists:empresa,id'],
             'cliente_id' => ['sometimes', 'required', 'exists:clientes,id'],
             'tipo_pago_id' => ['nullable', 'exists:tipos_de_pago,id'],
             'moneda' => ['sometimes', 'required', Rule::in(['USD', 'PEN'])],
