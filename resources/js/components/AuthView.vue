@@ -9,6 +9,7 @@ import AlertDescription from './ui/alert/AlertDescription.vue';
 import PageEyebrow from './PageEyebrow.vue';
 
 const appName = window.appConfig.appName;
+const registrationEnabled = window.appConfig.registrationEnabled !== false;
 console.log(appName);
 const router = useRouter();
 const auth = useAuthStore();
@@ -44,6 +45,7 @@ const submitLabel = computed(() => {
 });
 
 function toggleMode() {
+    if (!registrationEnabled) return;
     mode.value = isRegister.value ? 'login' : 'register';
     error.value = '';
 }
@@ -128,7 +130,7 @@ async function submit() {
                     </Button>
                 </form>
 
-                <p class="mt-sp-lg text-center text-body-md text-on-surface-variant">
+                <p v-if="registrationEnabled" class="mt-sp-lg text-center text-body-md text-on-surface-variant">
                     <template v-if="isRegister">
                         ¿Ya tienes cuenta?
                         <Button variant="link" @click="toggleMode">Inicia sesion</Button>

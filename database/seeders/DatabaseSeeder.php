@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Empresa;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -32,6 +33,10 @@ class DatabaseSeeder extends Seeder
                 'orden' => 0,
             ]
         );
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval(pg_get_serial_sequence('empresa', 'id'), (SELECT MAX(id) FROM empresa))");
+        }
 
         $this->call(SunatCatalogSeeder::class);
     }

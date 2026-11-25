@@ -14,6 +14,9 @@
         <div id="app"></div>
     </body>
     <script>
-        window.appConfig = {appName:"{{config('app.name')}}"};
+        window.appConfig = {
+            appName: @json(config('app.name')),
+            registrationEnabled: @json((bool) config('auth.public_registration')),
+        };
     </script>
 </html>

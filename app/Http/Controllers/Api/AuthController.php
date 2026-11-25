@@ -13,6 +13,8 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        abort_unless(config('auth.public_registration'), 403, 'El registro público está deshabilitado.');
+
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'mail' => ['required', 'email', 'max:255', 'unique:usuarios,mail'],

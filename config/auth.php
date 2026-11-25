@@ -4,6 +4,8 @@ use App\Models\Usuario;
 
 return [
 
+    'public_registration' => env('REGISTRATION_ENABLED', true),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults

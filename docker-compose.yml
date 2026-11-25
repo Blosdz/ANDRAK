@@ -1,0 +1,60 @@
+name: andrak
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:?Configura DB_DATABASE en .env}
+      POSTGRES_USER: ${DB_USERNAME:?Configura DB_USERNAME en .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Configura DB_PASSWORD en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  app:
+    build:
+      context: .
+      target: app
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - app_storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST:?Configura VIRTUAL_HOST en .env}
+      VIRTUAL_PORT: "80"
+      CERT_NAME: ${CERT_NAME:?Configura CERT_NAME en .env}
+    expose:
+      - "80"
+    depends_on:
+      - app
+    networks:
+      - internal
+      - proxynet
+
+volumes:
+  postgres_data:
+  app_storage:
+
+networks:
+  internal:
+  proxynet:
+    external: true
+    name: proxynet

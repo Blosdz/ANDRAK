@@ -37,8 +37,8 @@ class DashboardController extends Controller
         $serieCotizaciones = $this->conteosPorMes($cotizaciones(), $anio);
         $serieComprobantes = $comprobantes()
             ->whereBetween('fecha_emision', ["{$anio}-01-01", "{$anio}-12-31"])
-            ->selectRaw("substr(fecha_emision, 1, 7) as mes, SUM(CASE WHEN tipo_comprobante_id = '01' THEN 1 ELSE 0 END) as facturas, SUM(CASE WHEN tipo_comprobante_id = '03' THEN 1 ELSE 0 END) as boletas")
-            ->groupByRaw('substr(fecha_emision, 1, 7)')
+            ->selectRaw("substr(CAST(fecha_emision AS CHAR(10)), 1, 7) as mes, SUM(CASE WHEN tipo_comprobante_id = '01' THEN 1 ELSE 0 END) as facturas, SUM(CASE WHEN tipo_comprobante_id = '03' THEN 1 ELSE 0 END) as boletas")
+            ->groupByRaw('substr(CAST(fecha_emision AS CHAR(10)), 1, 7)')
             ->get()->keyBy('mes');
 
         return response()->json([
@@ -74,16 +74,16 @@ class DashboardController extends Controller
     private function ventasPorMes($query, int $anio)
     {
         return $query->whereBetween('created_at', ["{$anio}-01-01 00:00:00", "{$anio}-12-31 23:59:59"])
-            ->selectRaw("substr(created_at, 1, 7) as mes, COUNT(*) as cantidad, SUM(CASE WHEN moneda = 'PEN' THEN monto_final ELSE 0 END) as pen, SUM(CASE WHEN moneda = 'USD' THEN monto_final ELSE 0 END) as usd")
-            ->groupByRaw('substr(created_at, 1, 7)')
+            ->selectRaw("substr(CAST(created_at AS CHAR(19)), 1, 7) as mes, COUNT(*) as cantidad, SUM(CASE WHEN moneda = 'PEN' THEN monto_final ELSE 0 END) as pen, SUM(CASE WHEN moneda = 'USD' THEN monto_final ELSE 0 END) as usd")
+            ->groupByRaw('substr(CAST(created_at AS CHAR(19)), 1, 7)')
             ->get()->keyBy('mes');
     }
 
     private function conteosPorMes($query, int $anio)
     {
         return $query->whereBetween('created_at', ["{$anio}-01-01 00:00:00", "{$anio}-12-31 23:59:59"])
-            ->selectRaw('substr(created_at, 1, 7) as mes, COUNT(*) as cantidad')
-            ->groupByRaw('substr(created_at, 1, 7)')
+            ->selectRaw('substr(CAST(created_at AS CHAR(19)), 1, 7) as mes, COUNT(*) as cantidad')
+            ->groupByRaw('substr(CAST(created_at AS CHAR(19)), 1, 7)')
             ->get()->keyBy('mes');
     }
 
